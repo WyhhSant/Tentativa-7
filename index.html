@@ -189,22 +189,6 @@
       animation: dash 1s linear infinite;
     }
 
-    /* Fullscreen mode */
-    .fullscreen-mode header,
-    .fullscreen-mode nav,
-    .fullscreen-mode .progress-container,
-    .fullscreen-mode footer,
-    .fullscreen-mode #btnTopo,
-    .fullscreen-mode .quiz-section,
-    .fullscreen-mode .comparacao-section,
-    .fullscreen-mode #darkToggle {
-      display: none !important;
-    }
-    .fullscreen-mode main {
-      padding: 2rem;
-      max-width: 100%;
-    }
-
     /* Impressão */
     @media print {
       header, nav, footer, #btnTopo, .quiz-section, .progress-container, button, #darkToggle {
@@ -229,9 +213,6 @@
         </p>
       </div>
       <div class="flex items-center gap-2 mt-4 md:mt-0">
-        <button id="fullscreenBtn" class="px-3 py-2 bg-white dark:bg-dark-card border border-sand dark:border-dark-border rounded-full text-sm shadow-sm hover:shadow transition flex items-center gap-1">
-          🖥️ <span class="hidden sm:inline">Tela cheia</span>
-        </button>
         <button id="darkToggle" class="px-4 py-2 bg-white dark:bg-dark-card border border-sand dark:border-dark-border rounded-full text-sm font-medium shadow-sm hover:shadow transition flex items-center gap-2">
           <span id="darkIcon">🌙</span>
           <span id="darkLabel">Modo escuro</span>
@@ -406,7 +387,6 @@
       const svgContainer = document.getElementById('svgContainer');
       const progressBar = document.getElementById('progressBar');
       const progressLabel = document.getElementById('progressLabel');
-      const fullscreenBtn = document.getElementById('fullscreenBtn');
       const darkToggle = document.getElementById('darkToggle');
       const darkIcon = document.getElementById('darkIcon');
       const darkLabel = document.getElementById('darkLabel');
@@ -615,12 +595,10 @@
 
       function toggleSpeech(button, contentElement) {
         if (synth.speaking && activeButton === button) {
-          // Já está falando e clicou no mesmo botão → parar
           stopSpeaking();
           return;
         }
 
-        // Se algo já está falando, para antes de iniciar novo
         stopSpeaking();
 
         const text = contentElement.innerText || contentElement.textContent;
@@ -629,7 +607,6 @@
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'pt-BR';
         utterance.onend = () => {
-          // Quando terminar naturalmente, restaurar botão
           if (activeButton === button) {
             button.innerHTML = '🔊 Ouvir';
             activeButton = null;
@@ -648,7 +625,6 @@
         synth.speak(utterance);
       }
 
-      // Conectar botões aos respectivos painéis de conteúdo
       ouvirCaboBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         toggleSpeech(ouvirCaboBtn, conteudoExplicacaoCabo);
@@ -660,20 +636,6 @@
       ouvirProtoBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         toggleSpeech(ouvirProtoBtn, conteudoExplicacaoProtocolo);
-      });
-
-      // Modo tela cheia
-      fullscreenBtn.addEventListener('click', () => {
-        if (!document.fullscreenElement) {
-          document.documentElement.requestFullscreen();
-          document.body.classList.add('fullscreen-mode');
-        } else {
-          document.exitFullscreen();
-          document.body.classList.remove('fullscreen-mode');
-        }
-      });
-      document.addEventListener('fullscreenchange', () => {
-        if (!document.fullscreenElement) document.body.classList.remove('fullscreen-mode');
       });
 
       // Botão voltar ao topo
