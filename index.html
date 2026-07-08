@@ -341,7 +341,7 @@
       </div>
     </section>
 
-    <!-- ========== SEÇÃO PROTOCOLOS (NOVA) ========== -->
+    <!-- ========== SEÇÃO PROTOCOLOS ========== -->
     <section id="sectionProtocolos" class="hidden space-y-8">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <article data-protocolo="profinet" class="relative card-hover bg-white dark:bg-dark-card rounded-2xl p-6 shadow-md cursor-pointer border border-sand dark:border-dark-border hover:border-sage dark:hover:border-dark-sage" tabindex="0">
@@ -411,6 +411,11 @@
       const darkIcon = document.getElementById('darkIcon');
       const darkLabel = document.getElementById('darkLabel');
       const btnTopo = document.getElementById('btnTopo');
+
+      // Botões de TTS
+      const ouvirCaboBtn = document.getElementById('ouvirCaboBtn');
+      const ouvirTopoBtn = document.getElementById('ouvirTopoBtn');
+      const ouvirProtoBtn = document.getElementById('ouvirProtoBtn');
 
       // Conteúdos dos cabos (com tooltips)
       const explicacoesCabos = {
@@ -483,7 +488,6 @@
         progressBar.style.width = percentage + '%';
       }
 
-      // Marca checks nos cards
       function marcarCard(categoria, id) {
         const check = document.getElementById(`check-${id}`);
         if (check) check.classList.add('visible');
@@ -522,7 +526,6 @@
         });
       }
 
-      // Inicializa quizzes
       renderQuiz(document.getElementById('quizCabosContainer'), quizCabosData);
       renderQuiz(document.getElementById('quizTopologiasContainer'), quizTopologiasData);
       renderQuiz(document.getElementById('quizProtocolosContainer'), quizProtocolosData);
@@ -595,23 +598,69 @@
       document.getElementById('btnEstrela').addEventListener('click', () => mostrarTopologia('estrela'));
       document.getElementById('btnBarramento').addEventListener('click', () => mostrarTopologia('barramento'));
 
-      // Leitura em voz alta (TTS)
-      function setupTTS(buttonId, contentElement) {
-        document.getElementById(buttonId).addEventListener('click', () => {
-          const text = contentElement.innerText || contentElement.textContent;
-          if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'pt-BR';
-            window.speechSynthesis.speak(utterance);
-          } else {
-            alert('Seu navegador não suporta leitura em voz alta.');
-          }
-        });
+      // --- Sistema de leitura em voz alta com toggle ---
+      const synth = window.speechSynthesis;
+      let currentUtterance = null;
+      let activeButton = null;
+
+      function stopSpeaking() {
+        if (synth.speaking) {
+          synth.cancel();
+        }
+        if (activeButton) {
+          activeButton.innerHTML = '🔊 Ouvir';
+          activeButton = null;
+        }
       }
-      setupTTS('ouvirCaboBtn', conteudoExplicacaoCabo);
-      setupTTS('ouvirTopoBtn', conteudoTopologia);
-      setupTTS('ouvirProtoBtn', conteudoExplicacaoProtocolo);
+
+      function toggleSpeech(button, contentElement) {
+        if (synth.speaking && activeButton === button) {
+          // Já está falando e clicou no mesmo botão → parar
+          stopSpeaking();
+          return;
+        }
+
+        // Se algo já está falando, para antes de iniciar novo
+        stopSpeaking();
+
+        const text = contentElement.innerText || contentElement.textContent;
+        if (!text.trim()) return;
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'pt-BR';
+        utterance.onend = () => {
+          // Quando terminar naturalmente, restaurar botão
+          if (activeButton === button) {
+            button.innerHTML = '🔊 Ouvir';
+            activeButton = null;
+          }
+        };
+        utterance.onerror = () => {
+          if (activeButton === button) {
+            button.innerHTML = '🔊 Ouvir';
+            activeButton = null;
+          }
+        };
+
+        currentUtterance = utterance;
+        activeButton = button;
+        button.innerHTML = '⏹️ Parar';
+        synth.speak(utterance);
+      }
+
+      // Conectar botões aos respectivos painéis de conteúdo
+      ouvirCaboBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleSpeech(ouvirCaboBtn, conteudoExplicacaoCabo);
+      });
+      ouvirTopoBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleSpeech(ouvirTopoBtn, conteudoTopologia);
+      });
+      ouvirProtoBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleSpeech(ouvirProtoBtn, conteudoExplicacaoProtocolo);
+      });
 
       // Modo tela cheia
       fullscreenBtn.addEventListener('click', () => {
